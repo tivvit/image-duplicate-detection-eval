@@ -1,0 +1,45 @@
+version: '3'
+services:
+  alternate:
+    build: alternate
+    volumes:
+      - ./data:/data
+      - ./data_alt:/data_alt
+      - ./alternate:/app
+  tf-serving:
+    build: serving
+    ports:
+      - "2233:2233"
+    volumes:
+      - "./models/:/models"
+  features:
+    build: feature-extractor
+    depends_on:
+      - tf-serving
+    volumes:
+      - "./features:/out"
+      - "./data_alt:/data"
+      - "./feature-extractor/:/app"
+  compare:
+    build: compare
+    volumes:
+      - ./data_alt:/data
+      - ./compare:/app
+      - ./features:/out
+  eval:
+    build: eval
+    volumes:
+      - ./eval:/app
+      - ./features:/features
+  result:
+    build: eval
+    volumes:
+      - ./eval:/app
+      - ./features:/features
+    command: python3 result.py
+  eval-hash:
+      build: eval
+      volumes:
+        - ./eval:/app
+        - ./features:/features
+      command: python3 eval_hash.py
